@@ -6,4 +6,15 @@
     <string name="seekbar_z_label">Z</string>
     <string name="menu_cube_label">Cube</string>
     <string name="menu_pyramid_label">Pyramid</string>
+    <string name="toast_no_sensor_manager">Missing SM play.</string>
+    <string name="toast_no_gyroscope">NO GYROCOPTER</string>
+    <string name="resist">Resist</string>
+    <string name="menu_sword_label">sword</string>
+
+    <string-array name="auto_entries">
+        <item>static</item>
+        <item>increment</item>
+        <item>decrement</item>
+    </string-array>
+
 </resources>
