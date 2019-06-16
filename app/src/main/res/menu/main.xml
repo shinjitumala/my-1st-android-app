@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-
     <item
-        android:id="@+id/menu_cube"
-        android:title="@string/menu_cube_label" />
-    <item
-        android:id="@+id/menu_pyramid"
-        android:title="@string/menu_pyramid_label" />
-    <item
-        android:id="@+id/menu_sword"
-        android:title="@string/menu_sword_label" />
+        android:id="@+id/menu_recalibrate"
+        android:title="@string/recalibrate"
+    />
 </menu>

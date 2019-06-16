@@ -1,20 +1,9 @@
 <resources>
     <string name="app_name">Die</string>
-
-    <string name="seekbar_x_label">X</string>
-    <string name="seekbar_y_label">Y</string>
-    <string name="seekbar_z_label">Z</string>
-    <string name="menu_cube_label">Cube</string>
-    <string name="menu_pyramid_label">Pyramid</string>
-    <string name="toast_no_sensor_manager">Missing SM play.</string>
-    <string name="toast_no_gyroscope">NO GYROCOPTER</string>
-    <string name="resist">Resist</string>
-    <string name="menu_sword_label">sword</string>
-
-    <string-array name="auto_entries">
-        <item>static</item>
-        <item>increment</item>
-        <item>decrement</item>
-    </string-array>
-
+    <string name="string_no_sensor_manager">This device does not have a sensor manager!</string>
+    <string name="string_no_light_sensor">This device has no light sensor!</string>
+    <string name="string_no_gyroscope">This device has no gyroscope!</string>
+    <string name="string_no_orientation_sensor">This device has no orientation sensor!</string>
+    <string name="string_no_accelerometer">This device has no accelerometer!</string>
+    <string name="recalibrate">Recalibrate</string>
 </resources>
