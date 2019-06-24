@@ -1,30 +1,15 @@
 package jp.ac.titech.itpro.sdl.die;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.opengl.GLSurfaceView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.SeekBar;
-import android.widget.Spinner;
 import android.widget.Toast;
-
-import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
     private final static String TAG = MainActivity.class.getSimpleName();

@@ -10,20 +10,20 @@ public class GameState {
     private MainActivity main_activity;
 
     private Rotation rotation;
-    private final float TURN_ON_THRESHOLD = 2.5f;
-    private final float TURN_OFF_THRESHOLD = 1.0f;
+    private static final float TURN_ON_THRESHOLD = 2.5f;
+    private static final float TURN_OFF_THRESHOLD = 1.0f;
 
     private LightLevel light_level;
-    private final int LOW_LIGHT_THRESHOLD = 40;
-    private final int HIGH_LIGHT_THRESHOLD = 150;
+    private static final int LOW_LIGHT_THRESHOLD = 40;
+    private static final int HIGH_LIGHT_THRESHOLD = 150;
 
     private Acceleration acceleration;
-    private final float TRIGGER_ACCELERATION_THRESHOLD = 2.5f;
-    private final float UNTRIGGER_ACCELERATION_THRESHOLD = 1.0f;
+    private static final float TRIGGER_ACCELERATION_THRESHOLD = 2.5f;
+    private static final float UNTRIGGER_ACCELERATION_THRESHOLD = 1.0f;
 
     private Orientation orientation;
-    private final int HALF_ORIENTATION_THRESHOLD = 10;
-    private final int FULL_ORIENTATION_THRESHOLD = 20;
+    private static final int HALF_ORIENTATION_THRESHOLD = 10;
+    private static final int FULL_ORIENTATION_THRESHOLD = 20;
 
     public GameState(MainActivity main_activity){
         this.main_activity = main_activity;
@@ -153,15 +153,20 @@ public class GameState {
         FORWARD, BACKWARD,
         UP, DOWN
     }
-    public Acceleration get_acceleratoin(){return acceleration;}
+    public Acceleration get_acceleration(){return acceleration;}
 
     // orientation: which way cans should be facing
     public enum Orientation {
-        FACE_TOP,
-        FACE_UP, FACE_UP_HALF,
-        FACE_DOWN, FACE_DOWN_HALF,
-        FACE_LEFT, FACE_LEFT_HALF,
-        FACE_RIGHT, FACE_RIGHT_HALF
+        FACE_TOP(0),
+        FACE_UP(1), FACE_UP_HALF(2),
+        FACE_DOWN(3), FACE_DOWN_HALF(4),
+        FACE_LEFT(5), FACE_LEFT_HALF(6),
+        FACE_RIGHT(7), FACE_RIGHT_HALF(8);
+
+        public int id;
+        Orientation(int id){
+            this.id = id;
+        }
     }
     public Orientation get_orientation(){return orientation;}
 
