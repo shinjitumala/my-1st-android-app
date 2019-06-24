@@ -12,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -21,16 +22,9 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import jp.ac.titech.itpro.sdl.die.GameObjects.CubeOfRage;
-import jp.ac.titech.itpro.sdl.die.GameObjects.DoorOfTilt;
-import jp.ac.titech.itpro.sdl.die.GameObjects.EvilWall;
-import jp.ac.titech.itpro.sdl.die.GameObjects.GameDrawableObject;
-import jp.ac.titech.itpro.sdl.die.GameObjects.GameMap;
-import jp.ac.titech.itpro.sdl.die.GameObjects.Gravipigs;
-import jp.ac.titech.itpro.sdl.die.GameObjects.Portal;
-import jp.ac.titech.itpro.sdl.die.GameObjects.Tiles;
-import jp.ac.titech.itpro.sdl.die.GameObjects.Wall;
-import jp.ac.titech.itpro.sdl.die.GameObjects.You;
+import jp.ac.titech.itpro.sdl.die.GameObjects.*;
+
+import static java.lang.System.exit;
 
 public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
     // for debugging purposes
@@ -40,15 +34,17 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private Paint paint = new Paint();
 
     // drawing thread controller
-    private SurfaceHolder surface_holder = this.getHolder();
+    private SurfaceHolder surface_holder;
     private Thread thread;
     private volatile boolean allowed_to_draw = false;
     private volatile boolean loading = true;
     private boolean surface_created = false;
+    private static final int FRAME_TIME = (int) (1000.0 / 60.0);
+    private Context context;
 
     // game data
     private GameState game_state;
-    private GameMap game_map;
+    private GameMap game_map = new GameMap();
 
     // entities
     private You you;
@@ -58,14 +54,40 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private static GameView gv;
 
-    public GameView(Context context, GameState game_state){
+    // Constructors
+    public GameView(Context context){
         super(context);
-        gv = this;
-        surface_holder.addCallback(this);
-        this.game_state = game_state;
+        initialize_game(context);
+    }
 
-        // initialize game_map
-        game_map = new GameMap();
+    public GameView(Context context, AttributeSet attribute_set){
+        super(context, attribute_set);
+        initialize_game(context);
+    }
+
+    public GameView(Context context, AttributeSet attribute_set, int def_style_attribute){
+        super(context, attribute_set, def_style_attribute);
+        initialize_game(context);
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public GameView(Context context, AttributeSet attribute_set, int def_style_attribute, int def_style_resource){
+        super(context, attribute_set, def_style_attribute, def_style_resource);
+        initialize_game(context);
+    }
+
+    private void initialize_game(Context context){
+        // surface view initialization
+        this.context = context;
+        surface_holder = this.getHolder();
+        surface_holder.addCallback(this);
+        setFocusable(true);
+
+        // initialize game state
+        this.game_state = new GameState((AppCompatActivity) context);
+        gv = this;
+
+        // load the first level
         load_map(1);
     }
 
@@ -128,28 +150,52 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         resume();
     }
 
-    public GameView(Context context, AttributeSet as){
-        super(context, as);
-        Log.e(TAG, "hmmm...");
-    }
-
     // main game loop
     @TargetApi(Build.VERSION_CODES.O)
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void run(){
+        long frame_start;
+        long frame;
+
+        /*
+         * In order to work reliable on Nexus 7, we place ~500ms delay at the start of drawing thread
+         * (AOSP - Issue 58385)
+         */
+        if (android.os.Build.BRAND.equalsIgnoreCase("google") && android.os.Build.MANUFACTURER.equalsIgnoreCase("asus") && android.os.Build.MODEL.equalsIgnoreCase("Nexus 7")) {
+            Log.w(TAG, "Sleep 500ms (Device: Asus Nexus 7)");
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ignored) {}
+        }
+
         while(allowed_to_draw){
-            if(!surface_holder.getSurface().isValid() || !surface_created){
-                continue;
+            if(!surface_holder.getSurface().isValid() || surface_holder == null){
+                return;
             }
-            Canvas tmp_canvas = surface_holder.lockCanvas();
-            if(tmp_canvas != null){
-                game_state.update();
 
-                update(tmp_canvas);
-                you.draw(game_state, tmp_canvas, paint);
+            frame_start = System.nanoTime();
+            Canvas canvas = surface_holder.lockCanvas();
+            if(canvas != null){
+                try{
+                    synchronized (surface_holder){
+                        game_state.update();
 
-                surface_holder.unlockCanvasAndPost(tmp_canvas);
+                        update(canvas);
+                        you.draw(game_state, canvas, paint);
+                    }
+                } finally {
+                    surface_holder.unlockCanvasAndPost(canvas);
+                }
+            }
+
+            frame = (System.nanoTime() - frame_start) / 1000000;
+            if(frame < FRAME_TIME){
+                try{
+                    Thread.sleep(FRAME_TIME - frame);
+                } catch (InterruptedException e){
+                    Log.e(TAG, "Was interrupted while sleeping.");
+                }
             }
         }
     }
@@ -192,14 +238,21 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     // interpret
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
+    public void surfaceCreated(SurfaceHolder surface_holder) {
         Log.d(TAG, "onSurfaceCreated");
+        this.surface_holder = surface_holder;
+        pause();
         surface_created = true;
+        resume();
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.d(TAG, "onSurfaceChanged");
+        // safeguard
+        if(width == 0 || height == 0){
+            return;
+        }
 
         // recalculate size of blocks
         game_state.BLOCK_SIZE = Math.min(width / game_map.size[0], height / game_map.size[1]);
@@ -214,28 +267,28 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     // resume game
-    public synchronized void resume(){
-        if(loading) return;
+    public synchronized void resume(){;
         Log.d(TAG, "resume");
-        if(thread != null){
-            thread.start();
-        }else{
-            thread = new Thread(this);
+        game_state.resume();
+        if(surface_created && thread == null){
+            thread = new Thread(this, "drawer");
+            allowed_to_draw = true;
             thread.start();
         }
-        allowed_to_draw = true;
     }
 
     // pause game
     public synchronized void pause(){
-        if(loading) return;
+        game_state.pause();
         Log.d(TAG, "pause");
-        allowed_to_draw = false;
-        try {
-            if(thread != null) thread.join();
+        if(thread != null) {
+            allowed_to_draw = false;
+            try{
+                thread.join();
+            }catch(Exception e) {
+                Log.e(TAG, "Error joining draw thread.");
+            }
             thread = null;
-        } catch(Exception e){
-            e.printStackTrace();
         }
     }
 
@@ -422,5 +475,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
         last_rot = game_state.get_rotation();
         return GameState.Rotation.STATIC;
+    }
+
+    public void recalibrate(){
+        game_state.recalibrate();
     }
 }

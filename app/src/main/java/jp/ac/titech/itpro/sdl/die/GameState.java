@@ -1,13 +1,14 @@
 package jp.ac.titech.itpro.sdl.die;
 
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 
 public class GameState {
     private static String TAG = GameState.class.getSimpleName();
 
+    // parameters used for drawing
     public int BLOCK_SIZE, X_START, Y_START;
 
-    private MainActivity main_activity;
+    private GameSensors game_sensors;
 
     private Rotation rotation;
     private static final float TURN_ON_THRESHOLD = 2.5f;
@@ -25,8 +26,8 @@ public class GameState {
     private static final int HALF_ORIENTATION_THRESHOLD = 10;
     private static final int FULL_ORIENTATION_THRESHOLD = 20;
 
-    public GameState(MainActivity main_activity){
-        this.main_activity = main_activity;
+    public GameState(AppCompatActivity main_activity){
+        game_sensors = new GameSensors(main_activity, this);
     }
 
     public void update(){
@@ -34,29 +35,29 @@ public class GameState {
 //        Rotation tmp3 = rotation;
         if(
                 rotation != Rotation.STATIC &&
-                Math.abs(main_activity.rotation[0]) < TURN_OFF_THRESHOLD &&
-                Math.abs(main_activity.rotation[1]) < TURN_OFF_THRESHOLD &&
-                Math.abs(main_activity.rotation[2]) < TURN_OFF_THRESHOLD
+                Math.abs(game_sensors.rotation[0]) < TURN_OFF_THRESHOLD &&
+                Math.abs(game_sensors.rotation[1]) < TURN_OFF_THRESHOLD &&
+                Math.abs(game_sensors.rotation[2]) < TURN_OFF_THRESHOLD
         )
             rotation = Rotation.STATIC;
         else {
-            double max = Math.max(Math.abs(main_activity.rotation[0]), Math.max(Math.abs(main_activity.rotation[1]), Math.abs(main_activity.rotation[2])));
-            if(max == Math.abs(main_activity.rotation[0])) {
-                if (main_activity.rotation[0] > TURN_ON_THRESHOLD)
+            double max = Math.max(Math.abs(game_sensors.rotation[0]), Math.max(Math.abs(game_sensors.rotation[1]), Math.abs(game_sensors.rotation[2])));
+            if(max == Math.abs(game_sensors.rotation[0])) {
+                if (game_sensors.rotation[0] > TURN_ON_THRESHOLD)
                     rotation = Rotation.TURN_BACKWARD;
-                if (main_activity.rotation[0] < -TURN_ON_THRESHOLD)
+                if (game_sensors.rotation[0] < -TURN_ON_THRESHOLD)
                     rotation = Rotation.TURN_FORWARD;
             }
-            if(max == Math.abs(main_activity.rotation[1])){
-                if (main_activity.rotation[1] > TURN_ON_THRESHOLD)
+            if(max == Math.abs(game_sensors.rotation[1])){
+                if (game_sensors.rotation[1] > TURN_ON_THRESHOLD)
                     rotation = Rotation.TURN_RIGHT;
-                if (main_activity.rotation[1] < -TURN_ON_THRESHOLD)
+                if (game_sensors.rotation[1] < -TURN_ON_THRESHOLD)
                     rotation = Rotation.TURN_LEFT;
             }
-            if(max == Math.abs(main_activity.rotation[2])){
-                if(main_activity.rotation[2] > TURN_ON_THRESHOLD)
+            if(max == Math.abs(game_sensors.rotation[2])){
+                if(game_sensors.rotation[2] > TURN_ON_THRESHOLD)
                     rotation = Rotation.ROTATE_RIGHT;
-                if(main_activity.rotation[2] < -TURN_ON_THRESHOLD)
+                if(game_sensors.rotation[2] < -TURN_ON_THRESHOLD)
                     rotation = Rotation.ROTATE_LEFT;
             }
         }
@@ -65,9 +66,9 @@ public class GameState {
         
         // handle illumination
 //        LightLevel tmp0 = light_level;
-        if(main_activity.illumination <= LOW_LIGHT_THRESHOLD)
+        if(game_sensors.illumination <= LOW_LIGHT_THRESHOLD)
             light_level = LightLevel.LOW;
-        else if(main_activity.illumination >= HIGH_LIGHT_THRESHOLD)
+        else if(game_sensors.illumination >= HIGH_LIGHT_THRESHOLD)
             light_level = LightLevel.HIGH;
         else
             light_level = LightLevel.MEDIUM;
@@ -78,29 +79,29 @@ public class GameState {
 //        Acceleration tmp2 = acceleration;
         if(
                 acceleration != Acceleration.STATIONARY &&
-                Math.abs(main_activity.acceleration[0]) < UNTRIGGER_ACCELERATION_THRESHOLD &&
-                Math.abs(main_activity.acceleration[1]) < UNTRIGGER_ACCELERATION_THRESHOLD &&
-                Math.abs(main_activity.acceleration[2]) < UNTRIGGER_ACCELERATION_THRESHOLD
+                Math.abs(game_sensors.acceleration[0]) < UNTRIGGER_ACCELERATION_THRESHOLD &&
+                Math.abs(game_sensors.acceleration[1]) < UNTRIGGER_ACCELERATION_THRESHOLD &&
+                Math.abs(game_sensors.acceleration[2]) < UNTRIGGER_ACCELERATION_THRESHOLD
         )
             acceleration = Acceleration.STATIONARY;
         else {
-            double max = Math.max(Math.abs(main_activity.acceleration[0]), Math.max(Math.abs(main_activity.acceleration[1]), Math.abs(main_activity.acceleration[2])));
-            if(max == Math.abs(main_activity.acceleration[0])) {
-                if (main_activity.acceleration[0] > TRIGGER_ACCELERATION_THRESHOLD)
+            double max = Math.max(Math.abs(game_sensors.acceleration[0]), Math.max(Math.abs(game_sensors.acceleration[1]), Math.abs(game_sensors.acceleration[2])));
+            if(max == Math.abs(game_sensors.acceleration[0])) {
+                if (game_sensors.acceleration[0] > TRIGGER_ACCELERATION_THRESHOLD)
                     acceleration = Acceleration.RIGHT;
-                if (main_activity.acceleration[0] < -TRIGGER_ACCELERATION_THRESHOLD)
+                if (game_sensors.acceleration[0] < -TRIGGER_ACCELERATION_THRESHOLD)
                     acceleration = Acceleration.LEFT;
             }
-            if(max == Math.abs(main_activity.acceleration[1])){
-                if (main_activity.acceleration[1] > TRIGGER_ACCELERATION_THRESHOLD)
+            if(max == Math.abs(game_sensors.acceleration[1])){
+                if (game_sensors.acceleration[1] > TRIGGER_ACCELERATION_THRESHOLD)
                     acceleration = Acceleration.FORWARD;
-                if (main_activity.acceleration[1] < -TRIGGER_ACCELERATION_THRESHOLD)
+                if (game_sensors.acceleration[1] < -TRIGGER_ACCELERATION_THRESHOLD)
                     acceleration = Acceleration.BACKWARD;
             }
-            if(max == Math.abs(main_activity.acceleration[2])){
-                if(main_activity.acceleration[2] > TRIGGER_ACCELERATION_THRESHOLD)
+            if(max == Math.abs(game_sensors.acceleration[2])){
+                if(game_sensors.acceleration[2] > TRIGGER_ACCELERATION_THRESHOLD)
                     acceleration = Acceleration.UP;
-                if(main_activity.acceleration[2] < -TRIGGER_ACCELERATION_THRESHOLD)
+                if(game_sensors.acceleration[2] < -TRIGGER_ACCELERATION_THRESHOLD)
                     acceleration = Acceleration.DOWN;
             }
         }
@@ -109,9 +110,9 @@ public class GameState {
 
         // handle orientation
 //        Orientation tmp1 = orientation;
-        boolean y_plus_z = main_activity.orientation[1] >= main_activity.orientation[2];
-        boolean y_minus_z = -main_activity.orientation[1] <= main_activity.orientation[2];
-        double maximum = Math.max(Math.abs(main_activity.orientation[1]), Math.abs(main_activity.orientation[2]));
+        boolean y_plus_z = game_sensors.orientation[1] >= game_sensors.orientation[2];
+        boolean y_minus_z = -game_sensors.orientation[1] <= game_sensors.orientation[2];
+        double maximum = Math.max(Math.abs(game_sensors.orientation[1]), Math.abs(game_sensors.orientation[2]));
         if(maximum <= HALF_ORIENTATION_THRESHOLD)
             orientation = Orientation.FACE_TOP;
         else if(maximum >= FULL_ORIENTATION_THRESHOLD){
@@ -170,4 +171,16 @@ public class GameState {
     }
     public Orientation get_orientation(){return orientation;}
 
+    public void resume(){
+        game_sensors.resume();
+        game_sensors.recalibrate();
+    }
+
+    public void pause(){
+        game_sensors.pause();
+    }
+
+    public void recalibrate(){
+        game_sensors.recalibrate();
+    }
 }
