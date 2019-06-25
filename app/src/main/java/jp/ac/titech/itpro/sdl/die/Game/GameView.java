@@ -1,4 +1,4 @@
-package jp.ac.titech.itpro.sdl.die;
+package jp.ac.titech.itpro.sdl.die.Game;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -22,37 +21,46 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import jp.ac.titech.itpro.sdl.die.GameObjects.*;
-
-import static java.lang.System.exit;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.*;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.CubeOfRage;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.DoorOfTilt;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.EvilWall;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.GameDrawableObject;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Gravipigs;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Portal;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Tiles;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Wall;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.You;
+import jp.ac.titech.itpro.sdl.die.Game.Systems.GameSoundEngine;
+import jp.ac.titech.itpro.sdl.die.Game.Systems.GameState;
 
 public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Callback {
     // for debugging purposes
     private String TAG = GameView.class.getSimpleName();
 
-    // used by the game loop
-    private Paint paint = new Paint();
-
     // drawing thread controller
     private SurfaceHolder surface_holder;
     private Thread thread;
     private volatile boolean allowed_to_draw = false;
-    private volatile boolean loading = true;
     private boolean surface_created = false;
-    private static final int FRAME_TIME = (int) (1000.0 / 60.0);
-    private Context context;
+    private static final int FRAME_TIME = (int) (1000.0 / 10.0);
+    private int width, height;
 
     // game data
     private GameState game_state;
     private GameMap game_map = new GameMap();
+    private GameSoundEngine game_sound_engine;
+    private Scenario scenario;
 
     // entities
     private You you;
     private ArrayList<GameDrawableObject> game_objects;
     private ArrayList<GameDrawableObject> game_objects_top;
     private ArrayList<GameDrawableObject> game_objects_all;
+    private ArrayList<GameDrawableObject> game_objects_gravitons;
+    private ArrayList<GameDrawableObject> game_objects_rages;
 
-    private static GameView gv;
+    public static GameView gv;
 
     // Constructors
     public GameView(Context context){
@@ -78,13 +86,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private void initialize_game(Context context){
         // surface view initialization
-        this.context = context;
         surface_holder = this.getHolder();
         surface_holder.addCallback(this);
         setFocusable(true);
 
         // initialize game state
-        this.game_state = new GameState((AppCompatActivity) context);
+        this.game_state = new GameState((AppCompatActivity) context, this);
+        this.game_sound_engine = new GameSoundEngine(context);
+        this.scenario = new Scenario(game_sound_engine);
         gv = this;
 
         // load the first level
@@ -93,7 +102,6 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private void load_map(int level){
         pause();
-        loading = true;
         // load map from rom
         game_map.set_level(level);
 
@@ -101,6 +109,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         game_objects = new ArrayList<>();
         game_objects_top = new ArrayList<>();
         game_objects_all = new ArrayList<>();
+        game_objects_gravitons = new ArrayList<>();
+        game_objects_rages = new ArrayList<>();
 
         // initialize game objects
         for(int i = 0; i < game_map.size[0]; i++)
@@ -129,9 +139,12 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 switch(game_map.get_init_map_top(i, j)){
                     case 1: // you
                         you = new You(i, j);
+                        scenario.you(you, game_map.get_level());
                         break;
-                    case 2: // Gravpigs
-                        game_objects_top.add(new Gravipigs(i, j));
+                    case 2: // Gravipigs
+                        Gravipigs g = new Gravipigs(i, j);
+                        game_objects_top.add(g);
+                        game_objects_gravitons.add(g);
                         break;
                     case 3: // EvilWall
                         game_objects_top.add(new EvilWall(i, j));
@@ -140,13 +153,15 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                         game_objects_top.add(new DoorOfTilt(i, j));
                         break;
                     case 5: // CubeOfRage
-                        game_objects_top.add(new CubeOfRage(i, j));
+                        CubeOfRage c = new CubeOfRage(i, j);
+                        game_objects_top.add(c);
+                        game_objects_rages.add(c);
                         break;
                 }
             }
 
         game_objects_all.addAll(game_objects); game_objects_all.addAll(game_objects_top);
-        loading = false;
+        update_drawing_scale();
         resume();
     }
 
@@ -178,12 +193,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             Canvas canvas = surface_holder.lockCanvas();
             if(canvas != null){
                 try{
-                    synchronized (surface_holder){
-                        game_state.update();
-
-                        update(canvas);
-                        you.draw(game_state, canvas, paint);
-                    }
+                    update(canvas);
                 } finally {
                     surface_holder.unlockCanvasAndPost(canvas);
                 }
@@ -203,39 +213,37 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     // game logic
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void update(Canvas canvas){
-        // draw background
-        int color;
-        switch(game_state.get_light_level()){
-            case LOW:
-                color = Color.rgb(29, 65, 111);
-            break;
-            case MEDIUM:
-                color = Color.rgb(228, 98, 7);
-            break;
-            case HIGH:
-                color = Color.rgb(91, 153, 233);
-            break;
-            default:
-                color = Color.YELLOW;
-            break;
-        }
-        canvas.drawColor(color);
+            // draw background
+            int color;
+            switch (game_state.get_light_level()) {
+                case LOW:
+                    color = Color.rgb(29, 65, 111);
+                    break;
+                case MEDIUM:
+                    color = Color.rgb(228, 98, 7);
+                    break;
+                case HIGH:
+                    color = Color.rgb(91, 153, 233);
+                    break;
+                default:
+                    color = Color.YELLOW;
+                    break;
+            }
+            canvas.drawColor(color);
 
-        // draw game objects
-        for(GameDrawableObject x : game_objects){
-            x.draw(game_state, canvas, paint);
-        }
+            // draw game objects
+            for (GameDrawableObject x : game_objects) {
+                x.draw(game_state, canvas);
+            }
 
-        // draw top level objects
-        for(GameDrawableObject x : game_objects_top){
-            x.draw(game_state, canvas, paint);
-        }
+            // draw top level objects
+            for (GameDrawableObject x : game_objects_top) {
+                x.draw(game_state, canvas);
+            }
 
-        // poll accelerometer and gyroscope events
-        update_events(accelerometer(game_state), gyroscope(game_state));
+            // draw player
+            you.draw(game_state, canvas);
     }
-
-    // interpret
 
     @Override
     public void surfaceCreated(SurfaceHolder surface_holder) {
@@ -253,7 +261,12 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         if(width == 0 || height == 0){
             return;
         }
+        this.width = width;
+        this.height = height;
+        update_drawing_scale();
+    }
 
+    public void update_drawing_scale(){
         // recalculate size of blocks
         game_state.BLOCK_SIZE = Math.min(width / game_map.size[0], height / game_map.size[1]);
         game_state.X_START = (width - game_state.BLOCK_SIZE * game_map.size[0]) / 2;
@@ -267,7 +280,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     // resume game
-    public synchronized void resume(){;
+    public synchronized void resume(){
         Log.d(TAG, "resume");
         game_state.resume();
         if(surface_created && thread == null){
@@ -309,6 +322,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 touch_end[1] = event.getY();
                 if(Math.sqrt(Math.pow(touch_end[0] - touch_start[0], 2) + Math.pow(touch_end[1] - touch_start[1], 2)) > MINIMUM_DISTANCE)
                     swipe();
+                else{
+                    scenario.tap();
+                }
             break;
         }
         return true;
@@ -349,12 +365,13 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     }
 
     // direction: right, up, left, down
+    // returns true if it is possible for a object in (x, y) to go in the 'direction
     private boolean check_passable(int x, int y, int direction){
         for(GameDrawableObject penis : game_objects_all){
-            if(penis.position[0] == x && penis.position[1] == y && !penis.passable[direction])
+            if(penis.position[0] == x && penis.position[1] == y && !penis.passable()[direction])
                 return false;
         }
-        return true;
+        return you.position[0] != x || you.position[1] != y || you.passable()[direction];
     }
 
     // image loader
@@ -364,117 +381,35 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         return new BitmapDrawable(bitmap);
     }
 
-    // detect accelerometer events
-    // 0: none, 1: up, 2: left, 3: down, 4: right, 5: forward, 6: backward
-    private int last_accel = 0;
-    private int counter_accel = 0;
-    private static final int COUNTER_ACCEL = 60;
-    public int accelerometer(GameState game_state){
-        switch(game_state.get_acceleration()){
-            case STATIONARY:
-                if(counter_accel >= COUNTER_ACCEL) {
-                    counter_accel = 0;
-                    last_accel = 0;
-                }
-                counter_accel++;
-                return 0;
-            case UP:
-                if(last_accel == 3) {
-                    last_accel = 0;
-//                    Log.d(TAG, "down!");
-                    return 5;
-                } else {
-                    last_accel = 1;
-                    return 0;
-                }
-            case LEFT:
-                if(last_accel == 4) {
-                    last_accel = 0;
-//                    Log.d(TAG, "right!");
-                    return 3;
-                } else {
-                    last_accel = 2;
-                    return 0;
-                }
-            case DOWN:
-                if(last_accel == 1) {
-                    last_accel = 0;
-//                    Log.d(TAG, "up!");
-                    return 6;
-                } else {
-                    last_accel = 3;
-                    return 0;
-                }
-            case RIGHT:
-                if(last_accel == 2){
-                    last_accel = 0;
-//                    Log.d(TAG, "left!");
-                    return 1;
-                } else {
-                    last_accel = 4;
-                    return 0;
-                }
-            case FORWARD:
-                if(last_accel == 6){
-                    last_accel = 0;
-//                    Log.d(TAG, "backward!");
-                    return 2;
-                } else {
-                    last_accel = 5;
-                    return 0;
-                }
-            case BACKWARD:
-                if(last_accel == 5){
-                    last_accel = 0;
-//                    Log.d(TAG, "forward!");
-                    return 4;
-                } else {
-                    last_accel = 6;
-                    return 0;
-                }
-            default:
-                return 0;
-        }
-
-    }
-
-    public void update_events(int direction, GameState.Rotation rot){
-        for(GameDrawableObject x : game_objects_all){
-            if(x.graviton){
-                switch(direction){
-                    case 4:
-                        if (check_passable(x.position[0],x.position[1] - 1, 3)) x.position[1]--;
+    public void acceleration_event(GameState.Acceleration acceleration){
+        for(GameDrawableObject x : game_objects_gravitons){
+            switch(acceleration){
+                case FORWARD:
+                    if (check_passable(x.position[0],x.position[1] - 1, 3)) x.position[1]--;
                     break;
-                    case 1:
-                        if (check_passable(x.position[0] - 1, x.position[1], 0)) x.position[0]--;
+                case LEFT:
+                    if (check_passable(x.position[0] - 1, x.position[1], 0)) x.position[0]--;
                     break;
-                    case 2:
-                        if (check_passable(x.position[0], x.position[1] + 1, 1)) x.position[1]++;
+                case BACKWARD:
+                    if (check_passable(x.position[0], x.position[1] + 1, 1)) x.position[1]++;
                     break;
-                    case 3:
-                        if (check_passable(x.position[0] + 1, x.position[1], 2)) x.position[0]++;
+                case RIGHT:
+                    if (check_passable(x.position[0] + 1, x.position[1], 2)) x.position[0]++;
                     break;
-                }
-            } else if(x.rage){
-                CubeOfRage tmp = (CubeOfRage) x;
-                switch(rot){
-                    case TURN_LEFT: tmp.left(); break;
-                    case TURN_RIGHT: tmp.right(); break;
-                    case TURN_FORWARD: tmp.up(); break;
-                    case TURN_BACKWARD: tmp.down(); break;
-                }
             }
         }
     }
 
-    private GameState.Rotation last_rot = GameState.Rotation.STATIC;
-    public GameState.Rotation gyroscope(GameState game_state){
-        if(last_rot != game_state.get_rotation()){
-            last_rot = game_state.get_rotation();
-            return game_state.get_rotation();
+    public void rotation_event(GameState.Rotation rotation){
+        for(GameDrawableObject x : game_objects_rages){
+            CubeOfRage tmp = (CubeOfRage) x;
+            switch(rotation){
+                case TURN_LEFT: tmp.left(); break;
+                case TURN_RIGHT: tmp.right(); break;
+                case TURN_FORWARD: tmp.up(); break;
+                case TURN_BACKWARD: tmp.down(); break;
+            }
         }
-        last_rot = game_state.get_rotation();
-        return GameState.Rotation.STATIC;
     }
 
     public void recalibrate(){

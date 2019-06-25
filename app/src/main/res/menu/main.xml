@@ -4,4 +4,8 @@
         android:id="@+id/menu_recalibrate"
         android:title="@string/recalibrate"
     />
+    <item
+        android:id="@+id/menu_reset"
+        android:title="@string/reset"
+    />
 </menu>

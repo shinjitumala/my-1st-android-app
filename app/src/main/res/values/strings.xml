@@ -6,4 +6,5 @@
     <string name="string_no_orientation_sensor">This device has no orientation sensor!</string>
     <string name="string_no_accelerometer">This device has no accelerometer!</string>
     <string name="recalibrate">Recalibrate</string>
+    <string name="reset">Reset Game</string>
 </resources>

@@ -1,21 +1,15 @@
 package jp.ac.titech.itpro.sdl.die;
 
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
+
+import jp.ac.titech.itpro.sdl.die.Game.GameView;
 
 public class MainActivity extends AppCompatActivity {
-    private final static String TAG = MainActivity.class.getSimpleName();
-
-    // surface view for drawing
-    GameView game_view;
+    // surface view for the game
+    private GameView game_view;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +42,11 @@ public class MainActivity extends AppCompatActivity {
         switch(item.getItemId()){
             case R.id.menu_recalibrate:
                 game_view.recalibrate();
+            break;
+            case R.id.menu_reset:
+                game_view.gv = null;
+                game_view =  new GameView(this);
+                setContentView(game_view);
             break;
         }
         return true;

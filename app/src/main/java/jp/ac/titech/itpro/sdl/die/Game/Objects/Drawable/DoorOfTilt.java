@@ -1,13 +1,10 @@
-package jp.ac.titech.itpro.sdl.die.GameObjects;
+package jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 
-import jp.ac.titech.itpro.sdl.die.GameState;
-import jp.ac.titech.itpro.sdl.die.GameView;
+import jp.ac.titech.itpro.sdl.die.Game.Systems.GameState;
+import jp.ac.titech.itpro.sdl.die.Game.GameView;
 import jp.ac.titech.itpro.sdl.die.R;
 
 public class DoorOfTilt extends GameDrawableObject {
@@ -27,7 +24,7 @@ public class DoorOfTilt extends GameDrawableObject {
     };
 
     @Override
-    public void draw(GameState game_state, Canvas canvas, Paint paint) {
+    public void draw(GameState game_state, Canvas canvas) {
         switch(game_state.get_orientation()){
             case FACE_TOP:
                 passable = new boolean[] {false, false, false, false};
