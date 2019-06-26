@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -16,11 +17,17 @@ import jp.ac.titech.itpro.sdl.die.R;
 public class You extends GameDrawableObject {
     // up, left, down, right
     public int direction;
-    private static Drawable[] images = new Drawable[]{
+    private static final Drawable[] images = new Drawable[]{
             GameView.load_image(R.drawable.you_up),
             GameView.load_image(R.drawable.you_left),
             GameView.load_image(R.drawable.you_down),
             GameView.load_image(R.drawable.you_right)
+    };
+    private static final Drawable[] images_torch = new Drawable[]{
+            GameView.load_image(R.drawable.torch_up),
+            GameView.load_image(R.drawable.torch_left),
+            GameView.load_image(R.drawable.torch_down),
+            GameView.load_image(R.drawable.torch_right)
     };
 
     public You(int initial_x, int initial_y){
@@ -36,6 +43,18 @@ public class You extends GameDrawableObject {
         light_mask(image, game_state);
         image.setBounds(get_rekt(game_state));
         image.draw(canvas);
+
+        // draw torch
+        if(game_state.get_light_level() == GameState.LightLevel.LOW){
+            Drawable overlay = images_torch[direction];
+            Rect rekt = new Rect(
+                    get_draw_x(game_state) - game_state.BLOCK_SIZE,
+                    get_draw_y(game_state) - game_state.BLOCK_SIZE,
+                    get_draw_x(game_state) + 2 * game_state.BLOCK_SIZE,
+                    get_draw_y(game_state) + 2 * game_state.BLOCK_SIZE);
+            overlay.setBounds(rekt);
+            overlay.draw(canvas);
+        }
 
         // draw serif
         if(serif_life > 0) {
@@ -79,7 +98,7 @@ public class You extends GameDrawableObject {
     private final static float SERIF_Y_OFFSET_FACTOR = 10;
     private final static float SERIF_MARGIN = 16;
     private final static float SERIF_TEXT_SIZE = 32;
-    private final static int SERIF_FADE_FRAMES = 5;
+    private final static int SERIF_FADE_FRAMES = 3;
     private final static float SERIF_OPACITY = 80;
     private String serif = "うんこぶりぶり";
     private int serif_life = 0;

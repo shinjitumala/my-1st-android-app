@@ -2,6 +2,7 @@ package jp.ac.titech.itpro.sdl.die.Game.Objects;
 
 import android.util.Log;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Random;
 
@@ -43,10 +44,13 @@ public class Scenario {
             try {
                 initial_delay(level);
                 trigger.invoke(scenario, level);
-            } catch (InterruptedException ignore){}
-            catch (Exception e) {
+            }
+            catch (InterruptedException ignore){}
+            catch (InvocationTargetException ignore){}
+            catch (IllegalAccessException e){
                 Log.e(TAG, e.toString());
             }
+
         }
     }
 
@@ -83,6 +87,14 @@ public class Scenario {
         say("とりあえず、進み続けるか...", 2, 1, level);
         say("このポータル、入れそうだな", 2, 2, level);
         say("ヒント:デバイスを傾けると、ポータルを傾けられるよ！", 4, 0, level);
+    }
+
+    @SuppressWarnings("unused")
+    public void level_FIVE(GameMap.Level level) throws InterruptedException {
+        say("なんか邪魔なところに家を建てるな", 3, 0.5f, level);
+        say("中を通してもらうしかない...", 2, 0.5f, level);
+        say("なんか怖い雰囲気するけど。", 2, 2, level);
+        say("ヒント：デバイスを勢いよく傾けると、家が傾くよ！", 4, 0, level);
     }
 
     public Scenario(GameSoundEngine game_sound_engine){

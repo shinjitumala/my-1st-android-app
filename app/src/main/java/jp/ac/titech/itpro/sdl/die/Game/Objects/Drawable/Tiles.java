@@ -13,7 +13,7 @@ public class Tiles extends GameDrawableObject {
         passable = new boolean[] {true, true, true, true};
     }
 
-    private static Drawable image = GameView.load_image(R.drawable.tile);
+    private static final Drawable image = GameView.load_image(R.drawable.tile);
 
     @Override
     public void draw(GameState game_state, Canvas canvas) {

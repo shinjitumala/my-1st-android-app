@@ -59,6 +59,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private ArrayList<GameDrawableObject> game_objects_all;
     private ArrayList<GameDrawableObject> game_objects_gravitons;
     private ArrayList<GameDrawableObject> game_objects_rages;
+    private ArrayList<GameDrawableObject> game_objects_portals;
 
     public static GameView gv;
 
@@ -111,6 +112,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         game_objects_all = new ArrayList<>();
         game_objects_gravitons = new ArrayList<>();
         game_objects_rages = new ArrayList<>();
+        game_objects_portals = new ArrayList<>();
 
         // initialize game objects
         for(int i = 0; i < game_map.size[0]; i++)
@@ -126,8 +128,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                         int k = game_map.get_init_map(i, j);
                         if(k < 0){
                             Portal p = new Portal(i, j);
-                            game_objects.add(p);
+                            game_objects_top.add(p);
                             p.level = -k;
+                            game_objects_portals.add(p);
                         }
                     break;
                 }
@@ -213,36 +216,36 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     // game logic
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void update(Canvas canvas){
-            // draw background
-            int color;
-            switch (game_state.get_light_level()) {
-                case LOW:
-                    color = Color.rgb(29, 65, 111);
-                    break;
-                case MEDIUM:
-                    color = Color.rgb(228, 98, 7);
-                    break;
-                case HIGH:
-                    color = Color.rgb(91, 153, 233);
-                    break;
-                default:
-                    color = Color.YELLOW;
-                    break;
-            }
-            canvas.drawColor(color);
+        // draw background
+        int color;
+        switch (game_state.get_light_level()) {
+            case LOW:
+                color = Color.rgb(29, 65, 111);
+                break;
+            case MEDIUM:
+                color = Color.rgb(228, 98, 7);
+                break;
+            case HIGH:
+                color = Color.rgb(91, 153, 233);
+                break;
+            default:
+                color = Color.YELLOW;
+                break;
+        }
+        canvas.drawColor(color);
 
-            // draw game objects
-            for (GameDrawableObject x : game_objects) {
-                x.draw(game_state, canvas);
-            }
+        // draw game objects
+        for (GameDrawableObject x : game_objects) {
+            x.draw(game_state, canvas);
+        }
 
-            // draw top level objects
-            for (GameDrawableObject x : game_objects_top) {
-                x.draw(game_state, canvas);
-            }
+        // draw top level objects
+        for (GameDrawableObject x : game_objects_top) {
+            x.draw(game_state, canvas);
+        }
 
-            // draw player
-            you.draw(game_state, canvas);
+        // draw player
+        you.draw(game_state, canvas);
     }
 
     @Override
@@ -349,13 +352,11 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
         Portal p = null;
         boolean flag = false;
-        for(GameDrawableObject x : game_objects_all){
-            if(x.getClass() == Portal.class){
-                p = (Portal) x;
-                if(Arrays.equals(p.position, you.position)) {
-                    flag = true;
-                    break;
-                }
+        for(GameDrawableObject x : game_objects_portals){
+            p = (Portal) x;
+            if(Arrays.equals(p.position, you.position)) {
+                flag = true;
+                break;
             }
         }
 

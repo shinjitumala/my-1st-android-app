@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
                 game_view.recalibrate();
             break;
             case R.id.menu_reset:
-                game_view.gv = null;
+                GameView.gv = null;
                 game_view =  new GameView(this);
                 setContentView(game_view);
             break;

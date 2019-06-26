@@ -14,7 +14,7 @@ public class EvilWall extends GameDrawableObject {
         super(initial_x, initial_y);
     }
 
-    private static Drawable image = GameView.load_image(R.drawable.wall);
+    private static final Drawable image = GameView.load_image(R.drawable.wall);
 
     @Override
     public void draw(GameState game_state, Canvas canvas) {
