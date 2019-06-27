@@ -141,7 +141,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
             for(int j = 0; j < game_map.size[1]; j++){
                 switch(game_map.get_init_map_top(i, j)){
                     case 1: // you
-                        you = new You(i, j);
+                        you = new You(i, j, game_sound_engine);
                         scenario.you(you, game_map.get_level());
                         break;
                     case 2: // Gravipigs
@@ -255,6 +255,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         pause();
         surface_created = true;
         resume();
+        game_sound_engine.start_music();
     }
 
     @Override
@@ -342,13 +343,13 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 you.position[0]++; you.direction = 3;
             } else if(!(dx > 0) && check_passable( you.position[0] - 1, you.position[1], 0)) {
                 you.position[0]--; you.direction = 1;
-            }
+            } else game_sound_engine.play_sound("bump");
         }else
             if(dy > 0 && check_passable(you.position[0], you.position[1] + 1, 1)) {
                 you.position[1]++; you.direction = 2;
             }else if(!(dy > 0) && check_passable(you.position[0], you.position[1] - 1, 3)) {
                 you.position[1]--; you.direction = 0;
-            }
+            } else game_sound_engine.play_sound("bump");
 
         Portal p = null;
         boolean flag = false;
@@ -361,6 +362,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         }
 
         if(flag) {
+            game_sound_engine.play_sound("portal");
             load_map(p.level);
         }
     }

@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 
+import jp.ac.titech.itpro.sdl.die.Game.Systems.GameSoundEngine;
 import jp.ac.titech.itpro.sdl.die.Game.Systems.GameState;
 import jp.ac.titech.itpro.sdl.die.Game.GameView;
 import jp.ac.titech.itpro.sdl.die.R;
@@ -30,10 +31,13 @@ public class You extends GameDrawableObject {
             GameView.load_image(R.drawable.torch_right)
     };
 
-    public You(int initial_x, int initial_y){
+    public You(int initial_x, int initial_y, GameSoundEngine game_sound_engine){
         super(initial_x, initial_y);
         direction = 0; // up
+        this.game_sound_engine = game_sound_engine;
     }
+
+    private final GameSoundEngine game_sound_engine;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -104,6 +108,7 @@ public class You extends GameDrawableObject {
     private int serif_life = 0;
     private int serif_fade = 0;
     public void talk(String s, float duration_seconds){
+        game_sound_engine.play_sound("say");
         serif = s;
         serif_life = Math.round(duration_seconds * 10);
         serif_fade = 0;
