@@ -14,21 +14,21 @@ public class GameState {
     private GameSensors game_sensors;
     private GameView game_view;
 
-    private Rotation rotation;
+    private Rotation rotation = Rotation.STATIC;
     private static final float TURN_ON_THRESHOLD = 2.5f;
     private static final int TURN_COOLDOWN = 60;
     volatile int turn_cooldown;
 
-    private LightLevel light_level;
+    private LightLevel light_level = LightLevel.HIGH;
     private static final int LOW_LIGHT_THRESHOLD = 40;
     private static final int HIGH_LIGHT_THRESHOLD = 150;
 
-    private Acceleration acceleration;
+    private Acceleration acceleration = Acceleration.STATIONARY;
     private static final float TRIGGER_ACCELERATION_THRESHOLD = 2.5f;
     private static final int ACCELERATION_COOLDOWN = 60;
     volatile int acceleration_cooldown;
 
-    private Orientation orientation;
+    private Orientation orientation = Orientation.FACE_TOP;
     private static final int HALF_ORIENTATION_THRESHOLD = 10;
     private static final int FULL_ORIENTATION_THRESHOLD = 20;
 

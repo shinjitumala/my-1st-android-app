@@ -22,13 +22,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import jp.ac.titech.itpro.sdl.die.Game.Objects.*;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Button;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.CubeOfRage;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.CubeOfRageNot;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Door;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.DoorOfTilt;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.DoorOfTiltNot;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.EvilWall;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.GameDrawableObject;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Gravipigs;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.GravipigsNot;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Portal;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Tiles;
+import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.EvilWallNot;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.Wall;
 import jp.ac.titech.itpro.sdl.die.Game.Objects.Drawable.You;
 import jp.ac.titech.itpro.sdl.die.Game.Systems.GameSoundEngine;
@@ -60,6 +66,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
     private ArrayList<GameDrawableObject> game_objects_gravitons;
     private ArrayList<GameDrawableObject> game_objects_rages;
     private ArrayList<GameDrawableObject> game_objects_portals;
+    private ArrayList<GameDrawableObject> game_objects_buttons;
+    private ArrayList<GameDrawableObject> game_objects_doors;
 
     public static GameView gv;
 
@@ -87,6 +95,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     private void initialize_game(Context context){
         // surface view initialization
+        allowed_to_draw = false;
         surface_holder = this.getHolder();
         surface_holder.addCallback(this);
         setFocusable(true);
@@ -98,7 +107,7 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         gv = this;
 
         // load the first level
-        load_map(1);
+        load_map(0);
     }
 
     private void load_map(int level){
@@ -113,6 +122,8 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         game_objects_gravitons = new ArrayList<>();
         game_objects_rages = new ArrayList<>();
         game_objects_portals = new ArrayList<>();
+        game_objects_buttons = new ArrayList<>();
+        game_objects_doors = new ArrayList<>();
 
         // initialize game objects
         for(int i = 0; i < game_map.size[0]; i++)
@@ -131,6 +142,14 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                             game_objects_top.add(p);
                             p.level = -k;
                             game_objects_portals.add(p);
+                        }else if(k < 20){
+                            Button b = new Button(i, j, k % 10);
+                            game_objects.add(b);
+                            game_objects_buttons.add(b);
+                        }else if(k < 30){
+                            Door d = new Door(i, j, k % 20);
+                            game_objects.add(d);
+                            game_objects_doors.add(d);
                         }
                     break;
                 }
@@ -149,16 +168,32 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                         game_objects_top.add(g);
                         game_objects_gravitons.add(g);
                         break;
+                    case -2: // GravipigsNot
+                        GravipigsNot gn = new GravipigsNot(i, j);
+                        game_objects_top.add(gn);
+                        game_objects_gravitons.add(gn);
+                        break;
                     case 3: // EvilWall
                         game_objects_top.add(new EvilWall(i, j));
                         break;
-                    case 4: // Door of Tilt
+                    case -3: // EvilWallNot
+                        game_objects_top.add(new EvilWallNot(i, j));
+                        break;
+                    case 4: // DoorOfTilt
                         game_objects_top.add(new DoorOfTilt(i, j));
+                        break;
+                    case -4: // DoorOfTiltNot
+                        game_objects_top.add(new DoorOfTiltNot(i, j));
                         break;
                     case 5: // CubeOfRage
                         CubeOfRage c = new CubeOfRage(i, j);
                         game_objects_top.add(c);
                         game_objects_rages.add(c);
+                        break;
+                    case -5: // CubeOfRageNot
+                        CubeOfRageNot cn = new CubeOfRageNot(i, j);
+                        game_objects_top.add(cn);
+                        game_objects_rages.add(cn);
                         break;
                 }
             }
@@ -233,6 +268,9 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
                 break;
         }
         canvas.drawColor(color);
+
+        // game logic
+        update_buttons_doors();
 
         // draw game objects
         for (GameDrawableObject x : game_objects) {
@@ -377,6 +415,31 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
         return you.position[0] != x || you.position[1] != y || you.passable()[direction];
     }
 
+    private void update_buttons_doors(){
+        for(GameDrawableObject x : game_objects_buttons){
+            Button b = (Button) x;
+            b.pressed = false;
+            for(GameDrawableObject g : game_objects_gravitons){
+                if(Arrays.equals(g.position, x.position)){
+                    b.pressed = true;
+                    break;
+                }
+            }
+            if(Arrays.equals(you.position, b.position)) b.pressed = true;
+        }
+        for(GameDrawableObject x : game_objects_doors){
+            Door d = (Door) x;
+            boolean flag = true;
+            for(GameDrawableObject y : game_objects_buttons){
+                Button b = (Button) y;
+                if(d.id == b.id && !b.pressed){
+                    flag = false;
+                }
+            }
+            d.open = flag;
+        }
+    }
+
     // image loader
     public static Drawable load_image(int id){
         if(gv == null) Log.e("fatal", "OH NO!");
@@ -386,19 +449,36 @@ public class GameView extends SurfaceView implements Runnable, SurfaceHolder.Cal
 
     public void acceleration_event(GameState.Acceleration acceleration){
         for(GameDrawableObject x : game_objects_gravitons){
-            switch(acceleration){
-                case FORWARD:
-                    if (check_passable(x.position[0],x.position[1] - 1, 3)) x.position[1]--;
-                    break;
-                case LEFT:
-                    if (check_passable(x.position[0] - 1, x.position[1], 0)) x.position[0]--;
-                    break;
-                case BACKWARD:
-                    if (check_passable(x.position[0], x.position[1] + 1, 1)) x.position[1]++;
-                    break;
-                case RIGHT:
-                    if (check_passable(x.position[0] + 1, x.position[1], 2)) x.position[0]++;
-                    break;
+            if(x.getClass() == Gravipigs.class) {
+                switch (acceleration) {
+                    case FORWARD:
+                        if (check_passable(x.position[0], x.position[1] - 1, 3)) x.position[1]--;
+                        break;
+                    case LEFT:
+                        if (check_passable(x.position[0] - 1, x.position[1], 0)) x.position[0]--;
+                        break;
+                    case BACKWARD:
+                        if (check_passable(x.position[0], x.position[1] + 1, 1)) x.position[1]++;
+                        break;
+                    case RIGHT:
+                        if (check_passable(x.position[0] + 1, x.position[1], 2)) x.position[0]++;
+                        break;
+                }
+            }else if(x.getClass() == GravipigsNot.class) {
+                switch (acceleration) {
+                    case BACKWARD:
+                        if (check_passable(x.position[0], x.position[1] - 1, 3)) x.position[1]--;
+                        break;
+                    case RIGHT:
+                        if (check_passable(x.position[0] - 1, x.position[1], 0)) x.position[0]--;
+                        break;
+                    case FORWARD:
+                        if (check_passable(x.position[0], x.position[1] + 1, 1)) x.position[1]++;
+                        break;
+                    case LEFT:
+                        if (check_passable(x.position[0] + 1, x.position[1], 2)) x.position[0]++;
+
+                }
             }
         }
     }

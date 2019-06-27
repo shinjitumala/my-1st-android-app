@@ -8,12 +8,12 @@ import jp.ac.titech.itpro.sdl.die.Game.GameView;
 import jp.ac.titech.itpro.sdl.die.R;
 
 public class CubeOfRage extends GameDrawableObject {
-    private static final Face top = new Face(GameView.load_image(R.drawable.cor_top), GameView.load_image(R.drawable.cor_top_night));
-    private static final Face bottom = new Face(GameView.load_image(R.drawable.cor_bottom), null);
-    private static final Face left = new Face(GameView.load_image(R.drawable.cor_left), GameView.load_image(R.drawable.cor_left_night));
-    private static final Face right = new Face(GameView.load_image(R.drawable.cor_right), GameView.load_image(R.drawable.cor_right_night));
-    private static final Face up = new Face(GameView.load_image(R.drawable.cor_up), GameView.load_image(R.drawable.cor_up_night));
-    private static final Face down = new Face(GameView.load_image(R.drawable.cor_down), null);
+    protected static final Face top = new Face(GameView.load_image(R.drawable.cor_top), GameView.load_image(R.drawable.cor_top_night));
+    protected static final Face bottom = new Face(GameView.load_image(R.drawable.cor_bottom), null);
+    protected static final Face left = new Face(GameView.load_image(R.drawable.cor_left), GameView.load_image(R.drawable.cor_left_night));
+    protected static final Face right = new Face(GameView.load_image(R.drawable.cor_right), GameView.load_image(R.drawable.cor_right_night));
+    protected static final Face up = new Face(GameView.load_image(R.drawable.cor_up), GameView.load_image(R.drawable.cor_up_night));
+    protected static final Face down = new Face(GameView.load_image(R.drawable.cor_down), null);
 
     static {
         // initialize the cube
@@ -43,7 +43,7 @@ public class CubeOfRage extends GameDrawableObject {
     }
 
     // 立方体の面を表現している
-    private static class Face{
+    protected static class Face{
         Face left, right, up, down;
         boolean l, r, u, d;
         boolean is_entrance;
@@ -55,7 +55,7 @@ public class CubeOfRage extends GameDrawableObject {
         }
     }
 
-    private Face top_face;
+    protected Face top_face;
 
     @Override
     public void draw(GameState game_state, Canvas canvas) {
@@ -65,6 +65,7 @@ public class CubeOfRage extends GameDrawableObject {
         image.draw(canvas);
         if(top_face.image_overlay != null && game_state.get_light_level() == GameState.LightLevel.LOW){
             top_face.image_overlay.setBounds(get_rekt(game_state));
+            top_face.image_overlay.clearColorFilter();
             top_face.image_overlay.draw(canvas);
         }
     }
@@ -74,7 +75,7 @@ public class CubeOfRage extends GameDrawableObject {
     public void down() {if(top_face.u) top_face = top_face.up; update_pass();}
     public void up() {if(top_face.d) top_face = top_face.down; update_pass();}
 
-    private void update_pass(){
+    protected void update_pass(){
         passable[0] = top_face.right.is_entrance;
         passable[1] = top_face.up.is_entrance;
         passable[2] = top_face.left.is_entrance;

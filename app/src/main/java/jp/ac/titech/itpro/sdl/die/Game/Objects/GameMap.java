@@ -19,6 +19,8 @@ public class GameMap {
     // 0: Tile
     // 1: Wall
     // -x: teleporter to stage x
+    // 1x: button with id x
+    // 2x: door with id x
     /* map top */
     // 0: none
     // 1: you, initial position
@@ -26,6 +28,7 @@ public class GameMap {
     // 3: EvilWall
     // 4: DoorOfTilt
     // 5: CubeOfRage
+    // negative ones are the *un* versions of the objects
     public enum Level {
         DEBUG(
                 // map size
@@ -37,19 +40,19 @@ public class GameMap {
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                1,11,21,11, 0, 0, 1, 1, 1, 1,
                 1, 0, 0, 0, 0, 0, 1, 0, 0, 1,
-                1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                1,10,20, 0, 0, 0, 0, 0, 0, 1,
                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                 // map data top
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0,-2,-3,-4,-5, 0,
                 0, 0, 0, 0, 4, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 5, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 2, 0, 0, 0, 0, 0, 2, 0,
+                0, 2, 0, 2, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 2, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 3, 0, 1, 0,
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ),
@@ -154,6 +157,9 @@ public class GameMap {
                 0, 0, 0, 0, 0,
                 0, 0, 0, 1, 0,
                 0, 0, 0, 0, 0
+        ),
+        SEVEN(
+
         ),
         TWENTY(
                 20, 20,

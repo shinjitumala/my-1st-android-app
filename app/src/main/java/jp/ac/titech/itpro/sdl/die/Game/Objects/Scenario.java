@@ -124,7 +124,7 @@ public class Scenario {
 
     private void say(String s, float duration, float wait, GameMap.Level level) throws InterruptedException {
         if(this.level != level) throw new InterruptedException();
-        you.talk(s, duration);
+        you.talk(s, duration + 0.6f);
         if(this.level != level) throw new InterruptedException();
         Thread.sleep(Math.round((wait + duration) * 1000));
         if(this.level != level) throw new InterruptedException();
